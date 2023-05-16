@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import pickle
 
 categorial_columns = ['Alcohol_Consump', 'Food_Between_Meals','Transport']
 
@@ -7,6 +8,10 @@ labelsMap = {'Body Level 1': 0,
              'Body Level 2': 1,
              'Body Level 3': 2,
              'Body Level 4': 3}
+inverseMap = {0: 'Body Level 1', 
+              1: 'Body Level 2',
+              2: 'Body Level 3',
+              3: 'Body Level 4'}
 
 normalizeColumns = ['BMI', 'Age', 'Weight', 'Height', 'Veg_Consump', 'Water_Consump', 'Meal_Count', 'Phys_Act', 'Time_E_Dev']
 
@@ -54,15 +59,30 @@ def performInference():
     scaler = StandardScaler()   
     scaler = scaler.fit(df_train[normalizeColumns])
 
-    df_train[normalizeColumns] = scaler.transform(df_train[normalizeColumns])
-    df_test[normalizeColumns] = scaler.transform(df_test[normalizeColumns])
+    df_train.loc[:,normalizeColumns] = scaler.transform(df_train[normalizeColumns])
+    df_test.loc[:,normalizeColumns] = scaler.transform(df_test[normalizeColumns])
 
     #Encode labels
-    df_train['Body_Level'] = df_train['Body_Level'].map(labelsMap)
+    df_train.loc[:,'Body_Level'] = df_train['Body_Level'].map(labelsMap)
 
-    #Write to csv
-    df_train.to_csv('train_processed.csv', index=False)
-    df_test.to_csv('test_processed.csv', index=False)
+    # #Write to csv
+    # df_train.to_csv('train_processed.csv', index=False)
+    # df_test.to_csv('test_processed.csv', index=False)
+
+    #Load model.pkl file
+    model = pickle.load(open('model.pkl', 'rb'))
+
+    #run prediction on test data
+    y_pred = model.predict(df_test)
+
+    #Map predictions to original labels
+    y_pred = pd.Series(y_pred)
+    y_pred = y_pred.map(inverseMap)
+
+    #write predictions to predictions.txt such that each line is a prediction
+    y_pred.to_csv('preds.txt', index=False, header=False)
+
+
 
 
 if __name__ == "__main__":
