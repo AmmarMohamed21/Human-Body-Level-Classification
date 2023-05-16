@@ -1,5 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import KNNImputer
+from sklearn.impute import SimpleImputer
 import pickle
 
 categorial_columns = ['Alcohol_Consump', 'Food_Between_Meals','Transport']
@@ -19,10 +21,37 @@ normalizeColumns = ['BMI', 'Age', 'Weight', 'Height', 'Veg_Consump', 'Water_Cons
 genderMapping = {"Male": 1, "Female": 0}
 YesNoMapping = {"yes": 1, "no": 0} #For cal consump, smoking, fam hist, cal burn
 
+#Function to impute missing values with KNN
+def imputeMissingValues(df):
+    imputer = KNNImputer(n_neighbors=5)
+    #impute continuous columns
+    #remove BMI column from normalizeColumns
+    continuousColumns = normalizeColumns.copy()
+    continuousColumns.remove('BMI')
+    df.loc[:,continuousColumns] = imputer.fit_transform(df[continuousColumns])
+
+    #categorical columns are the rest of the columns not in continuousColumns
+    categorical = list(set(df.columns) - set(continuousColumns))
+
+    #impute other categorical columns
+    categooricalImputer = SimpleImputer(strategy='most_frequent')
+    df.loc[:,categorical] = categooricalImputer.fit_transform(df[categorical])
+
+    #df.to_csv('test_imputed.csv', index=False)
+
+    return df
+
+
+
 #Fuction that applies same processing on test data as training data
 def performInference():
     df_train = pd.read_csv('body_level_classification_train.csv')
     df_test = pd.read_csv('test.csv')
+
+    #Check missing values in the df_test and impute with KNN
+    if df_test.isnull().values.any():
+        #impute missing values with KNN
+        df_test = imputeMissingValues(df_test)
 
     df_train["Gender"] = df_train["Gender"].map(genderMapping)
     df_train["H_Cal_Consump"] = df_train["H_Cal_Consump"].map(YesNoMapping)
