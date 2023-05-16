@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from mlxtend.evaluate import bias_variance_decomp
+import numpy as np
 
 def apply_crossvalidation(model, X_train, Y_train, k=10):
 
